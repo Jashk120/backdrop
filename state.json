@@ -1,0 +1,137 @@
+{
+  "durationMs": 10800000,
+  "startedAt": 1774950854511,
+  "pausedAt": 0,
+  "totalPausedMs": 0,
+  "currentIndex": 0,
+  "history": [
+    {
+      "index": 0,
+      "song": "Lag Ja Gale",
+      "singer": "Nishad Deshmukh",
+      "startedAt": 1774937652511
+    },
+    {
+      "index": 1,
+      "song": "Ajeeb Dastan Hai Yeh",
+      "singer": "Meera Kulkarni",
+      "startedAt": 1774937657692
+    },
+    {
+      "index": 2,
+      "song": "Aye Mere Watan Ke Logo",
+      "singer": "Rohan Joshi",
+      "startedAt": 1774937663362
+    },
+    {
+      "index": 0,
+      "song": "Lag Ja Gale",
+      "singer": "Nishad Deshmukh",
+      "startedAt": 1774946051489
+    },
+    {
+      "index": 1,
+      "song": "Ajeeb Dastan Hai Yeh",
+      "singer": "Meera Kulkarni",
+      "startedAt": 1774946055419
+    },
+    {
+      "index": 0,
+      "song": "Lag Ja Gale",
+      "singer": "Nishad Deshmukh",
+      "startedAt": 1774946130211
+    },
+    {
+      "index": 2,
+      "song": "Aye Mere Watan Ke Logo",
+      "singer": "Rohan Joshi",
+      "startedAt": 1774946132229
+    },
+    {
+      "index": 0,
+      "song": "Lag Ja Gale",
+      "singer": "Nishad Deshmukh",
+      "startedAt": 1774946132860
+    },
+    {
+      "index": 1,
+      "song": "Ajeeb Dastan Hai Yeh",
+      "singer": "Meera Kulkarni",
+      "startedAt": 1774946134043
+    },
+    {
+      "index": 2,
+      "song": "Aye Mere Watan Ke Logo",
+      "singer": "Rohan Joshi",
+      "startedAt": 1774946135036
+    },
+    {
+      "index": 0,
+      "song": "Shubhankaroti Mhana",
+      "singer": "Dummy",
+      "startedAt": 1774950297274
+    },
+    {
+      "index": 1,
+      "song": "Tuz Magto Mi Aata",
+      "singer": "Dummy",
+      "startedAt": 1774950297897
+    },
+    {
+      "index": 2,
+      "song": "Shri Ram",
+      "singer": "Dummy",
+      "startedAt": 1774950300055
+    },
+    {
+      "index": 1,
+      "song": "Tuz Magto Mi Aata",
+      "singer": "Dummy",
+      "startedAt": 1774950300421
+    },
+    {
+      "index": 0,
+      "song": "Shubhankaroti Mhana",
+      "singer": "Dummy",
+      "startedAt": 1774950325693
+    },
+    {
+      "index": 1,
+      "song": "Tuz Magto Mi Aata",
+      "singer": "Dummy",
+      "startedAt": 1774950333446
+    },
+    {
+      "index": 0,
+      "song": "Shubhankaroti Mhana",
+      "singer": "Dummy",
+      "startedAt": 1774950336927
+    },
+    {
+      "index": 7,
+      "song": "Ya Chimnyano Parat Fira",
+      "singer": "Dummy",
+      "startedAt": 1774950342138
+    },
+    {
+      "index": 0,
+      "song": "Shubhankaroti Mhana",
+      "singer": "Dummy",
+      "startedAt": 1774950450506
+    },
+    {
+      "index": 1,
+      "song": "Tuz Magto Mi Aata",
+      "singer": "Dummy",
+      "startedAt": 1774950450913
+    },
+    {
+      "index": 2,
+      "song": "Shri Ram",
+      "singer": "Dummy",
+      "startedAt": 1774950834175
+    }
+  ],
+  "slideMode": "backdrop",
+  "slideId": ""
+}
