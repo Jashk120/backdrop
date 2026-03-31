@@ -1,6 +1,4 @@
 // app/api/events/route.ts
-// TV connects here. On connect, immediately sends full current state.
-// Subsequent updates are pushed by /api/control via broadcast().
 
 import { NextRequest } from "next/server"
 import { sseClients }  from "@/lib/sseClients"
@@ -13,7 +11,6 @@ export async function GET(req: NextRequest) {
     start(controller) {
       sseClients.add(controller)
 
-      // Send full state immediately so TV syncs on connect / reconnect
       const state = readState()
       try {
         controller.enqueue(`data: ${JSON.stringify({
@@ -26,13 +23,11 @@ export async function GET(req: NextRequest) {
           msRemaining:   msRemaining(state),
           running:       isRunning(state),
           history:       state.history,
-          // Slide state — restores TV to correct view on reconnect
-          mode:          state.slideMode,
-          slideId:       state.slideId,
+          mode:          state.screenMode,   // restores TV view on reconnect
+          screenId:      state.screenId,
         })}\n\n`)
       } catch { /* ignore */ }
 
-      // Keep-alive heartbeat every 25s
       const heartbeat = setInterval(() => {
         try { controller.enqueue(": heartbeat\n\n") }
         catch { clearInterval(heartbeat) }

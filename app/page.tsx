@@ -4,12 +4,12 @@ import { Suspense, useEffect, useRef, useState, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import SaptasurBackdrop   from "@/components/Saptasurbackdrop"
 import SaptasurController from "@/components/Saptasurcontroller"
-import SaptasurSlide, { SLIDES } from "@/components/SaptasurSlide"
+import { SCREENS, getScreen } from "@/lib/screenRegistry"
 import CONFIG from "@/backdropConfig"
 import type { SongEntry } from "@/backdropConfig"
 import type { PastSong } from "@/lib/showState"
 
-// ── Timer display — driven entirely by server timestamps ──────────────────────
+// ── Timer display ─────────────────────────────────────────────────────────────
 function useServerTimer(timerState: TimerState) {
   const [display, setDisplay] = useState("--:--:--")
   const [warn,    setWarn]    = useState(false)
@@ -19,11 +19,7 @@ function useServerTimer(timerState: TimerState) {
   useEffect(() => {
     function tick() {
       const t = ref.current
-      if (t.startedAt === 0) {
-        setDisplay("--:--:--")
-        setWarn(false)
-        return
-      }
+      if (t.startedAt === 0) { setDisplay("--:--:--"); setWarn(false); return }
       const effectiveNow = t.pausedAt !== 0 ? t.pausedAt : Date.now()
       const elapsed  = effectiveNow - t.startedAt - t.totalPausedMs
       const leftMs   = Math.max(0, t.durationMs - elapsed)
@@ -60,29 +56,13 @@ interface SyncMsg {
   durationMs:    number
   running:       boolean
   history:       PastSong[]
-  // slide state (optional — present if you persist it in showState)
-  mode?:         "backdrop" | "slide"
-  slideId?:      string
+  mode?:         "backdrop" | "screen"
+  screenId?:     string
 }
-interface SongMsg {
-  type:         "song"
-  currentIndex: number
-  history:      PastSong[]
-}
-interface TimerMsg {
-  type:          "timer"
-  startedAt:     number
-  pausedAt:      number
-  totalPausedMs: number
-  durationMs:    number
-  running:       boolean
-}
-interface SlideMsg {
-  type:    "slide"
-  slideId: string
-  mode:    "slide" | "backdrop"
-}
-type SSEMsg = SyncMsg | SongMsg | TimerMsg | SlideMsg
+interface SongMsg   { type: "song";   currentIndex: number; history: PastSong[] }
+interface TimerMsg  { type: "timer";  startedAt: number; pausedAt: number; totalPausedMs: number; durationMs: number; running: boolean }
+interface ScreenMsg { type: "screen"; screenId: string; mode: "screen" | "backdrop" }
+type SSEMsg = SyncMsg | SongMsg | TimerMsg | ScreenMsg
 
 // ── Inner component ───────────────────────────────────────────────────────────
 function BackdropInner() {
@@ -90,30 +70,26 @@ function BackdropInner() {
   const isController = searchParams.has("controller")
 
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [song,  setSong]  = useState<SongEntry>(CONFIG.songs[0])
-  const [phase, setPhase] = useState<"enter" | "exit">("enter")
-  const [imgKey, setImgKey] = useState(0)
+  const [song,    setSong]    = useState<SongEntry>(CONFIG.songs[0])
+  const [phase,   setPhase]   = useState<"enter" | "exit">("enter")
+  const [imgKey,  setImgKey]  = useState(0)
   const [connected, setConnected] = useState(false)
   const [history, setHistory] = useState<PastSong[]>([])
 
   const [timerState, setTimerState] = useState<TimerState>({
-    startedAt:     0,
-    pausedAt:      0,
-    totalPausedMs: 0,
-    durationMs:    3 * 60 * 60 * 1000,
-    running:       false,
+    startedAt: 0, pausedAt: 0, totalPausedMs: 0,
+    durationMs: 3 * 60 * 60 * 1000, running: false,
   })
 
-  // ── Slide state ───────────────────────────────────────────────────────────
-  const [mode,         setMode]         = useState<"backdrop" | "slide">("backdrop")
-  const [slideId,      setSlideId]      = useState<string>(SLIDES[0]?.id ?? "")
-  const [slidePhase,   setSlidePhase]   = useState<"enter" | "exit">("enter")
-  // null = backdrop is active, string = that slide's id is active
-  const activeSlideId = mode === "slide" ? slideId : null
+  // ── Screen state ──────────────────────────────────────────────────────────
+  const [mode,        setMode]        = useState<"backdrop" | "screen">("backdrop")
+  const [screenId,    setScreenId]    = useState<string>(SCREENS[0]?.id ?? "")
+  const [screenPhase, setScreenPhase] = useState<"enter" | "exit">("enter")
+  const activeScreenId = mode === "screen" ? screenId : null
 
   const { display: timerDisplay, warn: timerWarn } = useServerTimer(timerState)
 
-  // ── Go to song index ──────────────────────────────────────────────────────
+  // ── Navigation ────────────────────────────────────────────────────────────
   const goTo = useCallback((nextIndex: number) => {
     const clamped = Math.min(Math.max(nextIndex, 0), CONFIG.songs.length - 1)
     setPhase("exit")
@@ -125,73 +101,60 @@ function BackdropInner() {
     }, 380)
   }, [])
 
-  // ── Switch slide ─────────────────────────────────────────────────────────
-  const goToSlide = useCallback((id: string) => {
-    setSlidePhase("exit")
+  const goToScreen = useCallback((id: string) => {
+    setScreenPhase("exit")
     setTimeout(() => {
-      setSlideId(id)
-      setMode("slide")
-      setSlidePhase("enter")
+      setScreenId(id)
+      setMode("screen")
+      setScreenPhase("enter")
     }, 380)
   }, [])
 
   const goToBackdrop = useCallback(() => {
-    setSlidePhase("exit")
+    setScreenPhase("exit")
     setTimeout(() => setMode("backdrop"), 380)
   }, [])
 
-  // ── Apply SSE message ─────────────────────────────────────────────────────
+  // ── Apply SSE ─────────────────────────────────────────────────────────────
   const applyMsg = useCallback((msg: SSEMsg) => {
     if (msg.type === "sync") {
       goTo(msg.currentIndex)
       setHistory(msg.history)
       setTimerState({
-        startedAt:     msg.startedAt,
-        pausedAt:      msg.pausedAt,
-        totalPausedMs: msg.totalPausedMs,
-        durationMs:    msg.durationMs,
-        running:       msg.running,
+        startedAt: msg.startedAt, pausedAt: msg.pausedAt,
+        totalPausedMs: msg.totalPausedMs, durationMs: msg.durationMs,
+        running: msg.running,
       })
-      // Restore slide state if persisted
-      if (msg.mode === "slide" && msg.slideId) {
-        setSlideId(msg.slideId)
-        setMode("slide")
-        setSlidePhase("enter")
+      if (msg.mode === "screen" && msg.screenId) {
+        setScreenId(msg.screenId)
+        setMode("screen")
+        setScreenPhase("enter")
       }
     } else if (msg.type === "song") {
       goTo(msg.currentIndex)
       setHistory(msg.history)
     } else if (msg.type === "timer") {
       setTimerState({
-        startedAt:     msg.startedAt,
-        pausedAt:      msg.pausedAt,
-        totalPausedMs: msg.totalPausedMs,
-        durationMs:    msg.durationMs,
-        running:       msg.running,
+        startedAt: msg.startedAt, pausedAt: msg.pausedAt,
+        totalPausedMs: msg.totalPausedMs, durationMs: msg.durationMs,
+        running: msg.running,
       })
-    } else if (msg.type === "slide") {
-      if (msg.mode === "slide") {
-        goToSlide(msg.slideId)
-      } else {
-        goToBackdrop()
-      }
+    } else if (msg.type === "screen") {
+      if (msg.mode === "screen") goToScreen(msg.screenId)
+      else goToBackdrop()
     }
-  }, [goTo, goToSlide, goToBackdrop])
+  }, [goTo, goToScreen, goToBackdrop])
 
   // ── SSE connection ────────────────────────────────────────────────────────
   useEffect(() => {
     let es: EventSource
     let retryTimeout: ReturnType<typeof setTimeout>
-
     function connect() {
       es = new EventSource("/api/events")
       es.onopen = () => setConnected(true)
       es.onmessage = (e) => {
         setConnected(true)
-        try {
-          const msg = JSON.parse(e.data) as SSEMsg
-          applyMsg(msg)
-        } catch { /* heartbeat or malformed */ }
+        try { applyMsg(JSON.parse(e.data) as SSEMsg) } catch { /* heartbeat */ }
       }
       es.onerror = () => {
         setConnected(false)
@@ -199,43 +162,34 @@ function BackdropInner() {
         retryTimeout = setTimeout(connect, 3000)
       }
     }
-
     connect()
-    return () => {
-      es?.close()
-      clearTimeout(retryTimeout)
-    }
+    return () => { es?.close(); clearTimeout(retryTimeout) }
   }, [applyMsg])
 
-  // ── Send control action ───────────────────────────────────────────────────
+  // ── Control actions ───────────────────────────────────────────────────────
   const sendControl = useCallback(async (action: string, extra?: object) => {
     try {
-      const res = await fetch("/api/control", {
-        method:  "POST",
+      const res  = await fetch("/api/control", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ action, ...extra }),
+        body: JSON.stringify({ action, ...extra }),
       })
       const data = await res.json()
-      if (data.ok) {
-        setConnected(true)
-        applyMsg(data as SSEMsg)
-      }
-    } catch {
-      setConnected(false)
-    }
+      if (data.ok) { setConnected(true); applyMsg(data as SSEMsg) }
+    } catch { setConnected(false) }
   }, [applyMsg])
 
-  const goNext      = useCallback(() => sendControl("next"),                         [sendControl])
-  const goPrev      = useCallback(() => sendControl("prev"),                         [sendControl])
-  const jumpTo      = useCallback((i: number) => sendControl("jump", { index: i }), [sendControl])
-  const startTimer  = useCallback(() => sendControl("start"),                        [sendControl])
-  const pauseTimer  = useCallback(() => sendControl("pause"),                        [sendControl])
-  const resumeTimer = useCallback(() => sendControl("resume"),                       [sendControl])
-  const resetTimer  = useCallback(() => sendControl("reset"),                        [sendControl])
-  const sendSlide   = useCallback((id: string) =>
-    sendControl("slide", { slideId: id, mode: "slide" }),                            [sendControl])
+  const goNext       = useCallback(() => sendControl("next"),                         [sendControl])
+  const goPrev       = useCallback(() => sendControl("prev"),                         [sendControl])
+  const jumpTo       = useCallback((i: number) => sendControl("jump", { index: i }), [sendControl])
+  const startTimer   = useCallback(() => sendControl("start"),                        [sendControl])
+  const pauseTimer   = useCallback(() => sendControl("pause"),                        [sendControl])
+  const resumeTimer  = useCallback(() => sendControl("resume"),                       [sendControl])
+  const resetTimer   = useCallback(() => sendControl("reset"),                        [sendControl])
+  const sendScreen   = useCallback((id: string) =>
+    sendControl("screen", { screenId: id, mode: "screen" }),                          [sendControl])
   const sendBackdrop = useCallback(() =>
-    sendControl("slide", { slideId: "", mode: "backdrop" }),                         [sendControl])
+    sendControl("screen", { screenId: "", mode: "backdrop" }),                        [sendControl])
 
   // ── TV keyboard nav ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -249,7 +203,6 @@ function BackdropInner() {
     return () => window.removeEventListener("keydown", onKey)
   }, [isController, sendControl, sendBackdrop])
 
-  // ── Shared props ──────────────────────────────────────────────────────────
   const sharedProps = {
     config: CONFIG, song, currentIndex,
     timerDisplay, timerWarn,
@@ -264,33 +217,31 @@ function BackdropInner() {
         {...sharedProps}
         connected={connected}
         history={history}
-        onNext={goNext}
-        onPrev={goPrev}
-        onJump={jumpTo}
-        onTimerStart={startTimer}
-        onTimerPause={pauseTimer}
-        onTimerResume={resumeTimer}
-        onTimerReset={resetTimer}
-        slides={SLIDES}
-        activeSlideId={activeSlideId}
-        onSlide={sendSlide}
+        onNext={goNext} onPrev={goPrev} onJump={jumpTo}
+        onTimerStart={startTimer} onTimerPause={pauseTimer}
+        onTimerResume={resumeTimer} onTimerReset={resetTimer}
+        screens={SCREENS}
+        activeScreenId={activeScreenId}
+        onScreen={sendScreen}
         onBackdrop={sendBackdrop}
       />
     )
   }
 
-  // ── TV: Slide mode ────────────────────────────────────────────────────────
-  if (mode === "slide") {
-    return (
-      <SaptasurSlide
-        slideId={slideId}
-        phase={slidePhase}
-        connected={connected}
-      />
-    )
+  // ── TV: registered screen ─────────────────────────────────────────────────
+  if (mode === "screen") {
+    const entry = getScreen(screenId)
+    if (entry) {
+      const Screen = entry.component
+      return <Screen
+      slideId={screenId}
+      phase={screenPhase}
+      connected={connected}
+    />
+    }
   }
 
-  // ── TV: Backdrop mode ─────────────────────────────────────────────────────
+  // ── TV: backdrop ──────────────────────────────────────────────────────────
   return (
     <SaptasurBackdrop
       {...sharedProps}

@@ -2,7 +2,7 @@
 
 import type { BackdropConfig, SongEntry } from "../backdropConfig"
 import type { PastSong } from "../lib/showState"
-import type { SlideEntry } from "./SaptasurSlide"
+import type { ScreenEntry } from "../lib/screenRegistry"
 
 interface ControllerProps {
   config:        BackdropConfig
@@ -21,11 +21,11 @@ interface ControllerProps {
   onTimerPause:  () => void
   onTimerResume: () => void
   onTimerReset:  () => void
-  // ── Slide controls ──────────────────────────────────────────────────────
-  slides:        SlideEntry[]
-  activeSlideId: string | null   // null = backdrop is showing
-  onSlide:       (slideId: string) => void
-  onBackdrop:    () => void
+  // ── Screen controls ─────────────────────────────────────────────────────
+  screens:        ScreenEntry[]
+  activeScreenId: string | null   // null = backdrop is showing
+  onScreen:       (screenId: string) => void
+  onBackdrop:     () => void
 }
 
 export default function SaptasurController({
@@ -34,11 +34,12 @@ export default function SaptasurController({
   connected, history,
   onNext, onPrev, onJump,
   onTimerStart, onTimerPause, onTimerResume, onTimerReset,
-  slides, activeSlideId, onSlide, onBackdrop,
+  screens, activeScreenId, onScreen, onBackdrop,
 }: ControllerProps) {
 
-  const timerColor    = timerWarn ? "#C0614A" : "#D4956A"
-  const isSlideMode   = activeSlideId !== null
+  const timerColor   = timerWarn ? "#C0614A" : "#D4956A"
+  const isScreenMode = activeScreenId !== null
+  const activeScreen = screens.find(s => s.id === activeScreenId)
 
   return (
     <>
@@ -75,11 +76,10 @@ export default function SaptasurController({
         /* ── mode badge ── */
         .ctrl-mode-badge {
           font-size:9px; letter-spacing:0.18em; text-transform:uppercase;
-          padding:3px 9px; border-radius:99px;
-          border:1px solid;
+          padding:3px 9px; border-radius:99px; border:1px solid;
           transition: all 0.3s;
         }
-        .ctrl-mode-badge.slide    { color:#A78BFA; border-color:rgba(167,139,250,0.35); background:rgba(167,139,250,0.08); }
+        .ctrl-mode-badge.screen   { color:#A78BFA; border-color:rgba(167,139,250,0.35); background:rgba(167,139,250,0.08); }
         .ctrl-mode-badge.backdrop { color:#3a3a44; border-color:rgba(255,255,255,0.06); background:transparent; }
 
         /* ── timer card ── */
@@ -90,52 +90,35 @@ export default function SaptasurController({
           border-radius: 12px;
           padding: 14px 16px;
         }
-        .ctrl-timer-label {
-          font-size: 8px; letter-spacing: 0.28em; text-transform: uppercase;
-          color: #5C5A57; margin-bottom: 6px;
-        }
+        .ctrl-timer-label { font-size:8px; letter-spacing:0.28em; text-transform:uppercase; color:#5C5A57; margin-bottom:6px; }
         .ctrl-timer-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
         .ctrl-timer-display {
-          font-size: 32px; font-weight: 500; letter-spacing: 0.08em;
-          transition: color 1s; font-variant-numeric: tabular-nums;
+          font-size:32px; font-weight:500; letter-spacing:0.08em;
+          transition:color 1s; font-variant-numeric:tabular-nums;
         }
         .ctrl-timer-btns { display:flex; gap:8px; }
         .ctrl-tbtn {
-          height: 36px; padding: 0 14px; border-radius: 8px;
-          border: 1px solid rgba(255,255,255,0.1);
-          background: #252530;
-          color: #E6E1D8; font-family:'Outfit',sans-serif;
-          font-size: 12px; font-weight: 500;
-          cursor: pointer; white-space: nowrap;
-          transition: background 0.15s, transform 0.1s;
-          -webkit-tap-highlight-color: transparent;
+          height:36px; padding:0 14px; border-radius:8px;
+          border:1px solid rgba(255,255,255,0.1); background:#252530;
+          color:#E6E1D8; font-family:'Outfit',sans-serif;
+          font-size:12px; font-weight:500; cursor:pointer; white-space:nowrap;
+          transition:background 0.15s, transform 0.1s;
+          -webkit-tap-highlight-color:transparent;
         }
-        .ctrl-tbtn:active { transform: scale(0.94); background:#2e2e3a; }
-        .ctrl-tbtn.start  { border-color:rgba(93,176,117,0.4); color:#5DB075; }
+        .ctrl-tbtn:active { transform:scale(0.94); background:#2e2e3a; }
+        .ctrl-tbtn.start  { border-color:rgba(93,176,117,0.4);  color:#5DB075; }
         .ctrl-tbtn.pause  { border-color:rgba(212,149,106,0.4); color:#D4956A; }
-        .ctrl-tbtn.resume { border-color:rgba(93,176,117,0.4); color:#5DB075; }
-        .ctrl-tbtn.reset  { border-color:rgba(192,97,74,0.3); color:#C0614A; font-size:11px; }
+        .ctrl-tbtn.resume { border-color:rgba(93,176,117,0.4);  color:#5DB075; }
+        .ctrl-tbtn.reset  { border-color:rgba(192,97,74,0.3);   color:#C0614A; font-size:11px; }
 
         /* ── now playing card ── */
         .ctrl-now-card {
-          margin: 12px 16px 0;
-          background: #1C1C24;
-          border: 1px solid rgba(212,149,106,0.15);
-          border-radius: 12px;
-          padding: 14px;
-          display: flex; gap: 12px; align-items: center;
+          margin:12px 16px 0; background:#1C1C24;
+          border:1px solid rgba(212,149,106,0.15); border-radius:12px;
+          padding:14px; display:flex; gap:12px; align-items:center;
         }
-        .ctrl-thumb {
-          width:52px; height:66px; border-radius:6px;
-          object-fit:cover; object-position:center top;
-          flex-shrink:0; filter:brightness(0.9);
-        }
-        .ctrl-thumb-placeholder {
-          width:52px; height:66px; border-radius:6px;
-          background:#2A2A34; flex-shrink:0;
-          display:flex; align-items:center; justify-content:center;
-          font-size:10px; color:#5C5A57;
-        }
+        .ctrl-thumb { width:52px; height:66px; border-radius:6px; object-fit:cover; object-position:center top; flex-shrink:0; filter:brightness(0.9); }
+        .ctrl-thumb-placeholder { width:52px; height:66px; border-radius:6px; background:#2A2A34; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; color:#5C5A57; }
         .ctrl-now-info { flex:1; min-width:0; }
         .ctrl-now-label { font-size:8px; letter-spacing:0.28em; text-transform:uppercase; color:#D4956A; opacity:0.7; margin-bottom:3px; }
         .ctrl-now-song  { font-size:17px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2; margin-bottom:3px; }
@@ -152,92 +135,70 @@ export default function SaptasurController({
         .ctrl-nav { margin:12px 16px 0; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
         .ctrl-nav-btn {
           height:60px; border-radius:10px;
-          border:1px solid rgba(255,255,255,0.08);
-          background:#1C1C24;
+          border:1px solid rgba(255,255,255,0.08); background:#1C1C24;
           color:#E6E1D8; font-family:'Outfit',sans-serif;
-          font-size:13px; font-weight:500; letter-spacing:0.04em;
-          cursor:pointer;
+          font-size:13px; font-weight:500; letter-spacing:0.04em; cursor:pointer;
           display:flex; align-items:center; justify-content:center; gap:8px;
           transition:background 0.15s, transform 0.1s;
           -webkit-tap-highlight-color:transparent;
         }
-        .ctrl-nav-btn:active  { transform:scale(0.96); background:#252530; }
-        .ctrl-nav-btn:disabled{ opacity:0.3; cursor:not-allowed; transform:none; }
-        .ctrl-nav-btn.prev    { border-color:rgba(124,158,191,0.2); color:#7C9EBF; }
-        .ctrl-nav-btn.next    { border-color:rgba(212,149,106,0.3); color:#D4956A; }
-        .ctrl-nav-btn svg     { width:18px; height:18px; flex-shrink:0; }
+        .ctrl-nav-btn:active   { transform:scale(0.96); background:#252530; }
+        .ctrl-nav-btn:disabled { opacity:0.3; cursor:not-allowed; transform:none; }
+        .ctrl-nav-btn.prev     { border-color:rgba(124,158,191,0.2); color:#7C9EBF; }
+        .ctrl-nav-btn.next     { border-color:rgba(212,149,106,0.3); color:#D4956A; }
+        .ctrl-nav-btn svg      { width:18px; height:18px; flex-shrink:0; }
 
         /* ── section label ── */
-        .ctrl-section-label {
-          margin:22px 16px 8px;
-          font-size:8px; letter-spacing:0.3em; text-transform:uppercase; color:#5C5A57;
-        }
+        .ctrl-section-label { margin:22px 16px 8px; font-size:8px; letter-spacing:0.3em; text-transform:uppercase; color:#5C5A57; }
 
-        /* ── slides section ── */
-        .ctrl-slides { margin:0 16px; display:flex; flex-direction:column; gap:8px; }
+        /* ── screens section ── */
+        .ctrl-screens { margin:0 16px; display:flex; flex-direction:column; gap:6px; }
 
-        .ctrl-slide-back {
+        .ctrl-screen-back {
           height:44px; border-radius:10px;
           border:1px solid rgba(167,139,250,0.25);
           background:rgba(167,139,250,0.06);
           color:#A78BFA; font-family:'Outfit',sans-serif;
-          font-size:12px; font-weight:500; letter-spacing:0.05em;
-          cursor:pointer;
+          font-size:12px; font-weight:500; letter-spacing:0.05em; cursor:pointer;
           display:flex; align-items:center; justify-content:center; gap:8px;
           transition:background 0.15s, transform 0.1s;
           -webkit-tap-highlight-color:transparent;
         }
-        .ctrl-slide-back:active { transform:scale(0.97); background:rgba(167,139,250,0.12); }
+        .ctrl-screen-back:active { transform:scale(0.97); background:rgba(167,139,250,0.12); }
 
-        .ctrl-slide-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-
-        .ctrl-slide-btn {
-          border-radius:10px;
-          border:1px solid rgba(255,255,255,0.08);
-          background:#1C1C24;
+        .ctrl-screen-btn {
+          height:52px; border-radius:10px;
+          border:1px solid rgba(255,255,255,0.07); background:#1C1C24;
           color:#E6E1D8; font-family:'Outfit',sans-serif;
-          font-size:12px; font-weight:400;
-          cursor:pointer; padding:0;
-          overflow:hidden;
-          display:flex; flex-direction:column;
-          transition:border-color 0.15s, transform 0.1s;
+          font-size:13px; font-weight:400; cursor:pointer;
+          display:flex; align-items:center; justify-content:space-between;
+          padding:0 16px; gap:12px;
+          transition:background 0.15s, border-color 0.15s, transform 0.1s;
           -webkit-tap-highlight-color:transparent;
           text-align:left;
         }
-        .ctrl-slide-btn:active    { transform:scale(0.96); }
-        .ctrl-slide-btn.active-slide {
-          border-color:rgba(167,139,250,0.5);
+        .ctrl-screen-btn:active      { transform:scale(0.985); }
+        .ctrl-screen-btn.active-screen {
+          border-color:rgba(167,139,250,0.45);
           background:#1e1a2e;
+          color:#C4B5FD;
         }
-        .ctrl-slide-thumb {
-          width:100%; aspect-ratio:16/9;
-          object-fit:cover; object-position:center top;
-          display:block;
-          background:#2A2A34;
+        .ctrl-screen-label { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .ctrl-screen-live {
+          font-size:8px; letter-spacing:0.2em; text-transform:uppercase;
+          color:#A78BFA; background:rgba(167,139,250,0.12);
+          border:1px solid rgba(167,139,250,0.25);
+          padding:2px 7px; border-radius:99px; flex-shrink:0;
         }
-        .ctrl-slide-thumb-placeholder {
-          width:100%; aspect-ratio:16/9;
-          background:#2A2A34;
-          display:flex; align-items:center; justify-content:center;
-          font-size:20px; color:#3a3a44;
-        }
-        .ctrl-slide-label {
-          padding:8px 10px 10px;
-          font-size:11px; color:#9E9A94;
-          white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-          display:flex; align-items:center; gap:6px;
-        }
-        .ctrl-slide-active-dot {
-          width:5px; height:5px; border-radius:50%; background:#A78BFA; flex-shrink:0;
-        }
+        .ctrl-screen-arrow { color:#3a3a44; flex-shrink:0; }
+        .ctrl-screen-btn.active-screen .ctrl-screen-arrow { color:#A78BFA; }
 
         /* ── song list ── */
         .ctrl-list { margin:0 16px; display:flex; flex-direction:column; gap:5px; }
         .ctrl-list-item {
           padding:11px 14px; border-radius:8px;
           border:1px solid transparent; background:#1C1C24;
-          display:flex; align-items:center; gap:12px;
-          cursor:pointer;
+          display:flex; align-items:center; gap:12px; cursor:pointer;
           transition:background 0.15s, border-color 0.15s, transform 0.1s;
           -webkit-tap-highlight-color:transparent;
         }
@@ -258,11 +219,11 @@ export default function SaptasurController({
           background:#181820; border:1px solid rgba(255,255,255,0.04);
           display:flex; align-items:center; gap:12px;
         }
-        .ctrl-hist-num  { font-size:11px; color:#3a3a44; width:20px; text-align:center; flex-shrink:0; }
-        .ctrl-hist-info { flex:1; min-width:0; }
-        .ctrl-hist-song { font-size:12px; color:#5C5A57; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .ctrl-hist-num   { font-size:11px; color:#3a3a44; width:20px; text-align:center; flex-shrink:0; }
+        .ctrl-hist-info  { flex:1; min-width:0; }
+        .ctrl-hist-song  { font-size:12px; color:#5C5A57; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .ctrl-hist-singer{ font-size:10px; color:#3a3a44; margin-top:1px; }
-        .ctrl-hist-check{ color:#5DB075; font-size:13px; flex-shrink:0; }
+        .ctrl-hist-check { color:#5DB075; font-size:13px; flex-shrink:0; }
       `}</style>
 
       <div className="ctrl-root">
@@ -273,11 +234,11 @@ export default function SaptasurController({
             <div className={`ctrl-status-dot ${connected ? "on" : "off"}`} />
             <span className="ctrl-status-text">{connected ? "Live" : "Disconnected"}</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div className={`ctrl-mode-badge ${isSlideMode ? "slide" : "backdrop"}`}>
-              {isSlideMode ? "Slide" : "Backdrop"}
+          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+            <div className={`ctrl-mode-badge ${isScreenMode ? "screen" : "backdrop"}`}>
+              {isScreenMode ? (activeScreen?.label ?? "Screen") : "Backdrop"}
             </div>
-            <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: "#3a3a44" }}>
+            <div style={{ fontSize:11, letterSpacing:"0.2em", textTransform:"uppercase", color:"#3a3a44" }}>
               Saptasur
             </div>
           </div>
@@ -291,18 +252,10 @@ export default function SaptasurController({
               {timerDisplay}
             </div>
             <div className="ctrl-timer-btns">
-              {!timerStarted && (
-                <button className="ctrl-tbtn start" onClick={onTimerStart}>Start</button>
-              )}
-              {timerStarted && timerRunning && (
-                <button className="ctrl-tbtn pause" onClick={onTimerPause}>Pause</button>
-              )}
-              {timerStarted && !timerRunning && (
-                <button className="ctrl-tbtn resume" onClick={onTimerResume}>Resume</button>
-              )}
-              {timerStarted && (
-                <button className="ctrl-tbtn reset" onClick={onTimerReset}>Reset</button>
-              )}
+              {!timerStarted && <button className="ctrl-tbtn start"  onClick={onTimerStart}>Start</button>}
+              {timerStarted && timerRunning  && <button className="ctrl-tbtn pause"  onClick={onTimerPause}>Pause</button>}
+              {timerStarted && !timerRunning && <button className="ctrl-tbtn resume" onClick={onTimerResume}>Resume</button>}
+              {timerStarted && <button className="ctrl-tbtn reset" onClick={onTimerReset}>Reset</button>}
             </div>
           </div>
         </div>
@@ -324,63 +277,52 @@ export default function SaptasurController({
         {/* Progress */}
         <div className="ctrl-progress-wrap">
           <div className="ctrl-progress-bar">
-            <div className="ctrl-progress-fill" style={{ width: `${((currentIndex + 1) / config.songs.length) * 100}%` }} />
+            <div className="ctrl-progress-fill" style={{ width:`${((currentIndex+1)/config.songs.length)*100}%` }} />
           </div>
-          <div className="ctrl-progress-text">{currentIndex + 1} / {config.songs.length}</div>
+          <div className="ctrl-progress-text">{currentIndex+1} / {config.songs.length}</div>
         </div>
 
         {/* Prev / Next */}
         <div className="ctrl-nav">
           <button className="ctrl-nav-btn prev" onClick={onPrev} disabled={currentIndex === 0}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
             Previous
           </button>
-          <button className="ctrl-nav-btn next" onClick={onNext} disabled={currentIndex === config.songs.length - 1}>
+          <button className="ctrl-nav-btn next" onClick={onNext} disabled={currentIndex === config.songs.length-1}>
             Next
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
         </div>
 
-        {/* ── Slides ── */}
-        {slides.length > 0 && <>
-          <div className="ctrl-section-label">Slides — tap to display on screen</div>
-          <div className="ctrl-slides">
+        {/* ── Screens ── */}
+        {screens.length > 0 && <>
+          <div className="ctrl-section-label">Screens — tap to display on TV</div>
+          <div className="ctrl-screens">
 
-            {/* Back to backdrop button — only shown when a slide is active */}
-            {isSlideMode && (
-              <button className="ctrl-slide-back" onClick={onBackdrop}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
+            {/* Back to backdrop — only when a screen is live */}
+            {isScreenMode && (
+              <button className="ctrl-screen-back" onClick={onBackdrop}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                 Back to Backdrop
               </button>
             )}
 
-            <div className="ctrl-slide-grid">
-              {slides.map(slide => {
-                const isActive = activeSlideId === slide.id
-                return (
-                  <button
-                    key={slide.id}
-                    className={`ctrl-slide-btn${isActive ? " active-slide" : ""}`}
-                    onClick={() => isActive ? onBackdrop() : onSlide(slide.id)}
-                  >
-                    {slide.src
-                      ? <img className="ctrl-slide-thumb" src={slide.src} alt={slide.alt} />
-                      : <div className="ctrl-slide-thumb-placeholder">🖼</div>
-                    }
-                    <div className="ctrl-slide-label">
-                      {isActive && <div className="ctrl-slide-active-dot" />}
-                      {slide.alt}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
+            {screens.map(screen => {
+              const isActive = activeScreenId === screen.id
+              return (
+                <button
+                  key={screen.id}
+                  className={`ctrl-screen-btn${isActive ? " active-screen" : ""}`}
+                  onClick={() => isActive ? onBackdrop() : onScreen(screen.id)}
+                >
+                  <span className="ctrl-screen-label">{screen.label}</span>
+                  {isActive
+                    ? <span className="ctrl-screen-live">Live</span>
+                    : <span className="ctrl-screen-arrow">›</span>
+                  }
+                </button>
+              )
+            })}
 
           </div>
         </>}
@@ -389,8 +331,8 @@ export default function SaptasurController({
         <div className="ctrl-section-label">All Songs — tap to jump</div>
         <div className="ctrl-list">
           {config.songs.map((s, i) => (
-            <div key={i} className={`ctrl-list-item${i === currentIndex ? " active" : ""}`} onClick={() => onJump(i)}>
-              <div className="ctrl-list-num">{i + 1}</div>
+            <div key={i} className={`ctrl-list-item${i===currentIndex?" active":""}`} onClick={() => onJump(i)}>
+              <div className="ctrl-list-num">{i+1}</div>
               <div className="ctrl-list-info">
                 <div className="ctrl-list-song">{s.song}</div>
                 <div className="ctrl-list-singer">{s.singer.name}</div>
@@ -406,7 +348,7 @@ export default function SaptasurController({
           <div className="ctrl-history">
             {[...history].reverse().map((h, i) => (
               <div key={i} className="ctrl-hist-item">
-                <div className="ctrl-hist-num">{h.index + 1}</div>
+                <div className="ctrl-hist-num">{h.index+1}</div>
                 <div className="ctrl-hist-info">
                   <div className="ctrl-hist-song">{h.song}</div>
                   <div className="ctrl-hist-singer">{h.singer}</div>

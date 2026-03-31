@@ -1,9 +1,9 @@
 {
   "durationMs": 10800000,
-  "startedAt": 1774950854511,
+  "startedAt": 1774952205696,
   "pausedAt": 0,
   "totalPausedMs": 0,
-  "currentIndex": 0,
+  "currentIndex": 8,
   "history": [
     {
       "index": 0,
@@ -130,8 +130,58 @@
       "song": "Shri Ram",
       "singer": "Dummy",
       "startedAt": 1774950834175
+    },
+    {
+      "index": 0,
+      "song": "Shubhankaroti Mhana",
+      "singer": "Dummy",
+      "startedAt": 1774951742579
+    },
+    {
+      "index": 1,
+      "song": "Tuz Magto Mi Aata",
+      "singer": "Dummy",
+      "startedAt": 1774951744221
+    },
+    {
+      "index": 2,
+      "song": "Shri Ram",
+      "singer": "Dummy",
+      "startedAt": 1774951776554
+    },
+    {
+      "index": 3,
+      "song": "Gagan Sadan",
+      "singer": "Dummy",
+      "startedAt": 1774951778583
+    },
+    {
+      "index": 4,
+      "song": "Vithai Kitai",
+      "singer": "Dummy",
+      "startedAt": 1774951778760
+    },
+    {
+      "index": 5,
+      "song": "Lek Ladki",
+      "singer": "Dummy",
+      "startedAt": 1774951778921
+    },
+    {
+      "index": 6,
+      "song": "Sunya Sunya Maifilit",
+      "singer": "Dummy",
+      "startedAt": 1774951779083
+    },
+    {
+      "index": 7,
+      "song": "Ya Chimnyano Parat Fira",
+      "singer": "Dummy",
+      "startedAt": 1774951779231
     }
   ],
+  "screenMode": "backdrop",
+  "screenId": "",
   "slideMode": "backdrop",
   "slideId": ""
 }

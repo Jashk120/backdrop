@@ -1,24 +1,22 @@
 // app/api/control/route.ts
-// Phone POSTs here for all actions: song navigation + timer control.
-// State is persisted to state.json and broadcast to all SSE clients.
 
 import { NextRequest, NextResponse } from "next/server"
-import { broadcast }  from "@/lib/sseClients"
+import { broadcast } from "@/lib/sseClients"
 import { readState, writeState, msRemaining, isRunning, isPaused, isNotStarted } from "@/lib/showState"
 import CONFIG from "@/backdropConfig"
 
 export const dynamic = "force-dynamic"
 
 type Action =
-  | "next" | "prev" | "jump"                  // song navigation
-  | "start" | "pause" | "resume" | "reset"     // timer control
-  | "slide"                                     // slide display
+  | "next" | "prev" | "jump"
+  | "start" | "pause" | "resume" | "reset"
+  | "screen"
 
 interface ControlPayload {
-  action:   Action
-  index?:   number                // for "jump"
-  slideId?: string                // for "slide"
-  mode?:    "slide" | "backdrop"  // for "slide"
+  action:    Action
+  index?:    number
+  screenId?: string
+  mode?:     "screen" | "backdrop"
 }
 
 export async function POST(req: NextRequest) {
@@ -37,12 +35,10 @@ export async function POST(req: NextRequest) {
   // ── Song navigation ───────────────────────────────────────────────────────
   if (action === "next" || action === "prev" || action === "jump") {
     let nextIndex = state.currentIndex
-
     if (action === "next") nextIndex = Math.min(state.currentIndex + 1, max)
     if (action === "prev") nextIndex = Math.max(state.currentIndex - 1, 0)
-    if (action === "jump" && typeof index === "number") {
+    if (action === "jump" && typeof index === "number")
       nextIndex = Math.min(Math.max(index, 0), max)
-    }
 
     if (nextIndex !== state.currentIndex) {
       const currentSong = CONFIG.songs[state.currentIndex]
@@ -59,65 +55,40 @@ export async function POST(req: NextRequest) {
 
     state.currentIndex = nextIndex
     writeState(state)
-
-    const payload = {
-      type:         "song",
-      currentIndex: state.currentIndex,
-      history:      state.history,
-    }
+    const payload = { type: "song", currentIndex: state.currentIndex, history: state.history }
     broadcast(payload)
     return NextResponse.json({ ok: true, ...payload })
   }
 
-  // ── Slide display ─────────────────────────────────────────────────────────
-  if (action === "slide") {
-    const targetMode  = body.mode    ?? "slide"
-    const targetSlide = body.slideId ?? ""
+  // ── Screen display ────────────────────────────────────────────────────────
+  if (action === "screen") {
+    const targetMode   = body.mode     ?? "screen"
+    const targetScreen = body.screenId ?? ""
 
-    // Persist so reconnecting TV restores the same view
-    state.slideMode = targetMode
-    state.slideId   = targetSlide
+    state.screenMode = targetMode
+    state.screenId   = targetScreen
     writeState(state)
 
-    const slidePayload = {
-      type:    "slide" as const,
-      slideId: targetSlide,
-      mode:    targetMode,
-    }
-    broadcast(slidePayload)
-    return NextResponse.json({ ok: true, ...slidePayload })
+    const payload = { type: "screen" as const, screenId: targetScreen, mode: targetMode }
+    broadcast(payload)
+    return NextResponse.json({ ok: true, ...payload })
   }
 
   // ── Timer control ─────────────────────────────────────────────────────────
-  if (action === "start") {
-    if (isNotStarted(state)) {
-      state.startedAt     = now
-      state.pausedAt      = 0
-      state.totalPausedMs = 0
-    }
+  if (action === "start" && isNotStarted(state)) {
+    state.startedAt = now; state.pausedAt = 0; state.totalPausedMs = 0
   }
-
-  if (action === "pause") {
-    if (isRunning(state)) {
-      state.pausedAt = now
-    }
+  if (action === "pause" && isRunning(state)) {
+    state.pausedAt = now
   }
-
-  if (action === "resume") {
-    if (isPaused(state)) {
-      state.totalPausedMs += now - state.pausedAt
-      state.pausedAt = 0
-    }
+  if (action === "resume" && isPaused(state)) {
+    state.totalPausedMs += now - state.pausedAt; state.pausedAt = 0
   }
-
   if (action === "reset") {
-    state.startedAt     = 0
-    state.pausedAt      = 0
-    state.totalPausedMs = 0
+    state.startedAt = 0; state.pausedAt = 0; state.totalPausedMs = 0
   }
 
   writeState(state)
-
   const timerPayload = {
     type:          "timer",
     startedAt:     state.startedAt,

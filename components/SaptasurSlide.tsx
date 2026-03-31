@@ -19,7 +19,7 @@ export interface SlideEntry {
 export const SLIDES: SlideEntry[] = [
   {
     id:      "poster",
-    src:     "/assets/media-desktop-tere-sur-aur-mere-geet-2026-0-2026-3-13-t-5-49-50.avif",
+    src:     "/assets/upscaled_sharpened_v2.png",
     alt:     "Tere Sur Aur Mere Geet 2026 — event poster",
     caption: undefined,
   },
