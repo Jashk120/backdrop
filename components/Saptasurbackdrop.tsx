@@ -1,3 +1,4 @@
+```typescript
 "use client"
 
 import { useState, useEffect } from "react"
@@ -17,6 +18,16 @@ export interface BackdropDisplayProps {
 }
 
 // ─── Logo ─────────────────────────────────────────────────────────────────────
+/**
+ * A logo component that displays an image with a text fallback.
+ * Handles image load failures gracefully by showing the fallback text.
+ *
+ * @param src - The source URL for the logo image.
+ * @param fallback - The text to display if the image fails to load or is not available.
+ * @param ngo - Optional flag to apply NGO-specific styling to the fallback.
+ * @param className - Optional additional CSS class names to apply.
+ * @returns A div containing either the logo image or a text fallback.
+ */
 function Logo({
   src,
   fallback,
@@ -48,6 +59,22 @@ function Logo({
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
+/**
+ * The main backdrop component for the Saptasur event display.
+ * Renders a full-screen stage backdrop with singer portrait, logos, song information, and timer.
+ *
+ * @param config - The backdrop configuration containing logo paths and display settings.
+ * @param song - The current song entry containing singer details and song information.
+ * @param currentIndex - The index of the current song in the playlist.
+ * @param phase - The animation phase, either "enter" for appearing or "exit" for disappearing.
+ * @param imgKey - A key used to trigger re-renders of the portrait image.
+ * @param timerDisplay - The formatted timer string to display.
+ * @param timerWarn - Flag indicating whether the timer should show a warning state.
+ * @param timerRunning - Flag indicating whether the timer is currently running.
+ * @param timerStarted - Flag indicating whether the timer has been started.
+ * @param connected - Flag indicating whether the remote connection is active.
+ * @returns The complete backdrop display element.
+ */
 export default function SaptasurBackdrop({
   config, song, currentIndex, phase, imgKey,
   timerDisplay, timerWarn, timerRunning, timerStarted,
@@ -125,3 +152,4 @@ export default function SaptasurBackdrop({
     </div>
   )
 }
+```
