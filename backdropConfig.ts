@@ -1,12 +1,22 @@
+```typescript
 // ─────────────────────────────────────────
 //  Saptasur Backdrop — Config & Types
 //  Edit CONFIG below to update the show
 // ─────────────────────────────────────────
 
+/**
+ * Represents a singer with a name and image URL.
+ */
 export class Singer {
   name:  string
   image: string  // Cloudinary URL or /public path
 
+  /**
+   * Creates a new Singer instance.
+   *
+   * @param name - The singer's name.
+   * @param image - The URL or path to the singer's image.
+   */
   constructor(name: string, image: string) {
     this.name  = name
     this.image = image
@@ -358,7 +368,7 @@ const CONFIG: BackdropConfig = {
       lataOriginal: "Naam Gum Jayega",
       film:         "Kinara",
       year:         "1977",
-      story:        "A duet with Bhupinder Singh composed by R.D. Burman to Gulzar's lyrics, this philosophical meditation on art outlasting its creator is considered one of Hindi cinema's most moving songs.",
+      story:        "A duet with Bhupinder Singh composed by R.D. Burman to Gulzar's lyrics, this philosophical meditation on art outliving its creator is considered one of Hindi cinema's most moving songs.",
     },
     {
       song:         "Aayega Aayega",
@@ -850,3 +860,4 @@ const CONFIG: BackdropConfig = {
 }
 
 export default CONFIG
+```
