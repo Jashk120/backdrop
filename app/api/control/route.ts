@@ -1,3 +1,4 @@
+```typescript
 // app/api/control/route.ts
 
 import { NextRequest, NextResponse } from "next/server"
@@ -19,6 +20,17 @@ interface ControlPayload {
   mode?:     "screen" | "backdrop"
 }
 
+/**
+ * Handles POST requests to control the show state.
+ *
+ * This endpoint accepts a JSON payload with an action and optional parameters.
+ * It processes song navigation (next, prev, jump), screen display mode changes,
+ * and timer control (start, pause, resume, reset).
+ *
+ * @param req - The incoming Next.js request object containing the control payload.
+ * @returns A NextResponse JSON object with the result of the action.
+ * @throws {NextResponse} Returns a 400 error if the request body is invalid JSON.
+ */
 export async function POST(req: NextRequest) {
   let body: ControlPayload
   try {
@@ -101,3 +113,4 @@ export async function POST(req: NextRequest) {
   broadcast(timerPayload)
   return NextResponse.json({ ok: true, ...timerPayload })
 }
+```

@@ -1,3 +1,4 @@
+```typescript
 // app/api/events/route.ts
 
 import { NextRequest } from "next/server"
@@ -6,6 +7,16 @@ import { readState, msRemaining, isRunning } from "@/lib/showState"
 
 export const dynamic = "force-dynamic"
 
+/**
+ * Handles GET requests for Server-Sent Events (SSE) streaming endpoint.
+ * 
+ * Establishes an SSE connection with the client, sends an initial sync event
+ * containing the current show state, and maintains the connection with periodic
+ * heartbeats. When the client disconnects, the connection is cleaned up.
+ *
+ * @param req - The incoming Next.js request object containing the signal for abort handling.
+ * @returns A Response object with an SSE stream that sends event data to the client.
+ */
 export async function GET(req: NextRequest) {
   const stream = new ReadableStream({
     start(controller) {
@@ -50,3 +61,4 @@ export async function GET(req: NextRequest) {
     },
   })
 }
+```

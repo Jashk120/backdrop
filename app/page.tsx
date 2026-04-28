@@ -1,3 +1,4 @@
+```typescript
 "use client"
 
 import { Suspense, useEffect, useRef, useState, useCallback } from "react"
@@ -10,6 +11,16 @@ import type { SongEntry } from "@/backdropConfig"
 import type { PastSong } from "@/lib/showState"
 
 // ── Timer display ─────────────────────────────────────────────────────────────
+/**
+ * Custom hook that computes and returns a formatted countdown timer display
+ * and a warning flag based on the provided TimerState.
+ *
+ * @param timerState - The current timer state object containing start times,
+ *                     pause times, total paused milliseconds, duration, and running flag.
+ * @returns An object with:
+ *          - `display`: a formatted string in the form "H:MM:SS" representing remaining time.
+ *          - `warn`: a boolean flag indicating if less than 30 minutes remain.
+ */
 function useServerTimer(timerState: TimerState) {
   const [display, setDisplay] = useState("--:--:--")
   const [warn,    setWarn]    = useState(false)
@@ -17,6 +28,10 @@ function useServerTimer(timerState: TimerState) {
   ref.current = timerState
 
   useEffect(() => {
+    /**
+     * Updates the timer display and warning flag based on the current timer state.
+     * Called every second via setInterval.
+     */
     function tick() {
       const t = ref.current
       if (t.startedAt === 0) { setDisplay("--:--:--"); setWarn(false); return }
@@ -65,6 +80,13 @@ interface ScreenMsg { type: "screen"; screenId: string; mode: "screen" | "backdr
 type SSEMsg = SyncMsg | SongMsg | TimerMsg | ScreenMsg
 
 // ── Inner component ───────────────────────────────────────────────────────────
+/**
+ * The main inner component that manages backdrop display, SSE connection,
+ * navigation, controller actions, and screen mode switching.
+ *
+ * @returns The rendered JSX for the backdrop page, either the controller view,
+ *          a registered screen component, or the backdrop component.
+ */
 function BackdropInner() {
   const searchParams = useSearchParams()
   const isController = searchParams.has("controller")
@@ -90,6 +112,11 @@ function BackdropInner() {
   const { display: timerDisplay, warn: timerWarn } = useServerTimer(timerState)
 
   // ── Navigation ────────────────────────────────────────────────────────────
+  /**
+   * Navigates to the song at the given index, with a transition animation.
+   *
+   * @param nextIndex - The target song index (will be clamped to valid range).
+   */
   const goTo = useCallback((nextIndex: number) => {
     const clamped = Math.min(Math.max(nextIndex, 0), CONFIG.songs.length - 1)
     setPhase("exit")
@@ -101,6 +128,11 @@ function BackdropInner() {
     }, 380)
   }, [])
 
+  /**
+   * Switches to the specified screen by ID, with a transition animation.
+   *
+   * @param id - The identifier of the screen to show.
+   */
   const goToScreen = useCallback((id: string) => {
     setScreenPhase("exit")
     setTimeout(() => {
@@ -110,12 +142,20 @@ function BackdropInner() {
     }, 380)
   }, [])
 
+  /**
+   * Returns to the backdrop view from a registered screen, with a transition animation.
+   */
   const goToBackdrop = useCallback(() => {
     setScreenPhase("exit")
     setTimeout(() => setMode("backdrop"), 380)
   }, [])
 
   // ── Apply SSE ─────────────────────────────────────────────────────────────
+  /**
+   * Applies an incoming Server‑Sent Event message to update the component state.
+   *
+   * @param msg - The parsed SSE message (sync, song, timer, or screen).
+   */
   const applyMsg = useCallback((msg: SSEMsg) => {
     if (msg.type === "sync") {
       goTo(msg.currentIndex)
@@ -149,6 +189,10 @@ function BackdropInner() {
   useEffect(() => {
     let es: EventSource
     let retryTimeout: ReturnType<typeof setTimeout>
+    /**
+     * Establishes a Server‑Sent Event connection to `/api/events`
+     * and attaches event handlers for message and error events.
+     */
     function connect() {
       es = new EventSource("/api/events")
       es.onopen = () => setConnected(true)
@@ -167,6 +211,12 @@ function BackdropInner() {
   }, [applyMsg])
 
   // ── Control actions ───────────────────────────────────────────────────────
+  /**
+   * Sends a control action to the server via HTTP POST and updates state with the response.
+   *
+   * @param action - The action name (e.g., "next", "prev", "start", etc.).
+   * @param extra  - Optional additional data to include in the request body.
+   */
   const sendControl = useCallback(async (action: string, extra?: object) => {
     try {
       const res  = await fetch("/api/control", {
@@ -179,21 +229,58 @@ function BackdropInner() {
     } catch { setConnected(false) }
   }, [applyMsg])
 
+  /**
+   * Sends a "next" control action to advance to the next song.
+   */
   const goNext       = useCallback(() => sendControl("next"),                         [sendControl])
+  /**
+   * Sends a "prev" control action to go back to the previous song.
+   */
   const goPrev       = useCallback(() => sendControl("prev"),                         [sendControl])
+  /**
+   * Sends a "jump" control action to jump to a specific song index.
+   *
+   * @param i - The index of the song to jump to.
+   */
   const jumpTo       = useCallback((i: number) => sendControl("jump", { index: i }), [sendControl])
+  /**
+   * Sends a "start" control action to start the timer.
+   */
   const startTimer   = useCallback(() => sendControl("start"),                        [sendControl])
+  /**
+   * Sends a "pause" control action to pause the timer.
+   */
   const pauseTimer   = useCallback(() => sendControl("pause"),                        [sendControl])
+  /**
+   * Sends a "resume" control action to resume the timer.
+   */
   const resumeTimer  = useCallback(() => sendControl("resume"),                       [sendControl])
+  /**
+   * Sends a "reset" control action to reset the timer.
+   */
   const resetTimer   = useCallback(() => sendControl("reset"),                        [sendControl])
+  /**
+   * Sends a "screen" control action to switch to a specific screen.
+   *
+   * @param id - The identifier of the screen to show.
+   */
   const sendScreen   = useCallback((id: string) =>
     sendControl("screen", { screenId: id, mode: "screen" }),                          [sendControl])
+  /**
+   * Sends a "screen" control action to return to the backdrop mode.
+   */
   const sendBackdrop = useCallback(() =>
     sendControl("screen", { screenId: "", mode: "backdrop" }),                        [sendControl])
 
   // ── TV keyboard nav ───────────────────────────────────────────────────────
   useEffect(() => {
     if (isController) return
+    /**
+     * Handles keyboard events for TV navigation: ArrowRight for next,
+     * ArrowLeft for previous, and Escape for backdrop.
+     *
+     * @param e - The keyboard event object.
+     */
     function onKey(e: KeyboardEvent) {
       if (e.key === "ArrowRight") sendControl("next")
       if (e.key === "ArrowLeft")  sendControl("prev")
@@ -252,6 +339,12 @@ function BackdropInner() {
   )
 }
 
+/**
+ * The default exported component for the backdrop page.
+ * Wraps BackdropInner in a Suspense boundary for fallback handling.
+ *
+ * @returns The Suspense-wrapped BackdropInner component.
+ */
 export default function BackdropPage() {
   return (
     <Suspense fallback={null}>
@@ -259,3 +352,4 @@ export default function BackdropPage() {
     </Suspense>
   )
 }
+```
