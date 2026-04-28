@@ -1,3 +1,4 @@
+```typescript
 "use client"
 
 // components/SaptasurSlide.tsx
@@ -35,6 +36,20 @@ interface Props {
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
+/**
+ * SaptasurSlide component.
+ *
+ * Renders a fullscreen slide displaying a single image, with smooth opacity and scale
+ * transitions driven by the parent component. The slide image is chosen based on the
+ * `slideId` prop, and fades in once loaded. An optional caption overlay can be shown,
+ * and a small connection indicator dot is displayed in the top‑right corner.
+ *
+ * @param props - Component properties.
+ * @param props.slideId - Identifier of the slide to display from the SLIDES registry.
+ * @param props.phase - Transition state ("enter" or "exit") controlling visibility and scaling.
+ * @param props.connected - Whether the control connection is active; determines the color of the status dot.
+ * @returns A fixed full‑screen container with the slide image and optional overlays.
+ */
 export default function SaptasurSlide({ slideId, phase, connected }: Props) {
   const slide = SLIDES.find(s => s.id === slideId) ?? SLIDES[0]
   const [loaded, setLoaded] = useState(false)
@@ -130,3 +145,4 @@ export default function SaptasurSlide({ slideId, phase, connected }: Props) {
     </div>
   )
 }
+```
