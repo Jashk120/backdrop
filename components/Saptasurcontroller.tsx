@@ -1,9 +1,34 @@
+```tsx
 "use client"
 
 import type { BackdropConfig, SongEntry } from "../backdropConfig"
 import type { PastSong } from "../lib/showState"
 import type { ScreenEntry } from "../lib/screenRegistry"
 
+/**
+ * Props for the SaptasurController component.
+ *
+ * @property config - The full backdrop configuration including the song list.
+ * @property song - The currently displayed song entry.
+ * @property currentIndex - The index of the current song within the config's song list.
+ * @property timerDisplay - The formatted timer string (e.g., "00:00").
+ * @property timerWarn - Whether the timer has entered a warning state.
+ * @property timerRunning - Whether the timer is currently running.
+ * @property timerStarted - Whether the timer has ever been started.
+ * @property connected - Whether the controller is connected to the display.
+ * @property history - List of songs that have already been performed.
+ * @property onNext - Callback to advance to the next song.
+ * @property onPrev - Callback to go back to the previous song.
+ * @property onJump - Callback to jump to a specific song index.
+ * @property onTimerStart - Callback to start the timer.
+ * @property onTimerPause - Callback to pause the timer.
+ * @property onTimerResume - Callback to resume the timer.
+ * @property onTimerReset - Callback to reset the timer.
+ * @property screens - List of available overlay screens.
+ * @property activeScreenId - ID of the currently active screen, or null if backdrop is showing.
+ * @property onScreen - Callback to activate a specific screen by its ID.
+ * @property onBackdrop - Callback to switch back to the backdrop.
+ */
 interface ControllerProps {
   config:        BackdropConfig
   song:          SongEntry
@@ -28,6 +53,34 @@ interface ControllerProps {
   onBackdrop:     () => void
 }
 
+/**
+ * Renders the main control panel for the Saptasur backdrop system.
+ * Displays the show timer, now‑playing card, navigation, screen selection,
+ * song list with jump functionality, and performance history.
+ *
+ * @param props - The component props.
+ * @param props.config - The full backdrop configuration including the song list.
+ * @param props.song - The currently displayed song entry.
+ * @param props.currentIndex - The index of the current song within the config's song list.
+ * @param props.timerDisplay - The formatted timer string (e.g., "00:00").
+ * @param props.timerWarn - Whether the timer has entered a warning state.
+ * @param props.timerRunning - Whether the timer is currently running.
+ * @param props.timerStarted - Whether the timer has ever been started.
+ * @param props.connected - Whether the controller is connected to the display.
+ * @param props.history - List of songs that have already been performed.
+ * @param props.onNext - Callback to advance to the next song.
+ * @param props.onPrev - Callback to go back to the previous song.
+ * @param props.onJump - Callback to jump to a specific song index.
+ * @param props.onTimerStart - Callback to start the timer.
+ * @param props.onTimerPause - Callback to pause the timer.
+ * @param props.onTimerResume - Callback to resume the timer.
+ * @param props.onTimerReset - Callback to reset the timer.
+ * @param props.screens - List of available overlay screens.
+ * @param props.activeScreenId - ID of the currently active screen, or null if backdrop is showing.
+ * @param props.onScreen - Callback to activate a specific screen by its ID.
+ * @param props.onBackdrop - Callback to switch back to the backdrop.
+ * @returns A JSX element representing the controller UI.
+ */
 export default function SaptasurController({
   config, song, currentIndex,
   timerDisplay, timerWarn, timerRunning, timerStarted,
@@ -363,3 +416,4 @@ export default function SaptasurController({
     </>
   )
 }
+```
