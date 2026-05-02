@@ -1,3 +1,4 @@
+```typescript
 // app/api/control/route.ts
 
 import { NextRequest, NextResponse } from "next/server"
@@ -19,6 +20,17 @@ interface ControlPayload {
   mode?:     "screen" | "backdrop"
 }
 
+/**
+ * Handles POST requests to control the backdrop show.
+ *
+ * Processes actions for song navigation (next, prev, jump), screen display mode,
+ * and timer control (start, pause, resume, reset). Updates the shared show state
+ * and broadcasts the changes to all connected SSE clients.
+ *
+ * @param req - The incoming HTTP request containing a JSON body with an action and optional parameters.
+ * @returns A JSON response indicating success (`ok: true`) along with the updated payload,
+ *          or an error response with status 400 if the request body is invalid JSON.
+ */
 export async function POST(req: NextRequest) {
   let body: ControlPayload
   try {
@@ -101,3 +113,4 @@ export async function POST(req: NextRequest) {
   broadcast(timerPayload)
   return NextResponse.json({ ok: true, ...timerPayload })
 }
+```
