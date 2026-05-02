@@ -1,8 +1,23 @@
+```typescript
 "use client"
 
 import { useState, useEffect } from "react"
 import type { BackdropConfig, SongEntry } from "../backdropConfig"
 
+/**
+ * Props for the SaptasurBackdrop component.
+ *
+ * @property config - The overall backdrop configuration (logos, etc.).
+ * @property song - The current song entry to display.
+ * @property currentIndex - The index of the current song for animation keying.
+ * @property phase - Whether the backdrop is entering or exiting.
+ * @property imgKey - A key to force image re‑mount on transitions.
+ * @property timerDisplay - The formatted timer string to show.
+ * @property timerWarn - Whether the timer should display in warning style.
+ * @property timerRunning - Whether the timer is currently running.
+ * @property timerStarted - Whether the timer has ever been started.
+ * @property connected - Whether the remote connection is active.
+ */
 export interface BackdropDisplayProps {
   config:       BackdropConfig
   song:         SongEntry
@@ -17,6 +32,20 @@ export interface BackdropDisplayProps {
 }
 
 // ─── Logo ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Renders a logo image with a fallback text element.
+ *
+ * Handles image load failures gracefully by switching to the fallback display.
+ * On the server side (before mount) or when no source is provided, the fallback
+ * is always shown.
+ *
+ * @param props.src - URL of the logo image.
+ * @param props.fallback - Text to display when the image is unavailable.
+ * @param props.ngo - Whether this is an NGO logo (adds a corresponding CSS class).
+ * @param props.className - Additional CSS classes to apply.
+ * @returns A React element rendering either the image or the fallback text.
+ */
 function Logo({
   src,
   fallback,
@@ -48,6 +77,17 @@ function Logo({
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Main backdrop component for the Saptasur live event display.
+ *
+ * Shows a blurred atmospheric background, a singer portrait, a text overlay
+ * with the current song information, a live timer, and connection status.
+ * The component animates between songs using the `phase` and `currentIndex` props.
+ *
+ * @param props - The full set of {@link BackdropDisplayProps}.
+ * @returns The rendered backdrop layout.
+ */
 export default function SaptasurBackdrop({
   config, song, currentIndex, phase, imgKey,
   timerDisplay, timerWarn, timerRunning, timerStarted,
@@ -125,3 +165,4 @@ export default function SaptasurBackdrop({
     </div>
   )
 }
+```
