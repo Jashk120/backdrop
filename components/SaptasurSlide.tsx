@@ -1,3 +1,4 @@
+```typescript
 "use client"
 
 // components/SaptasurSlide.tsx
@@ -9,6 +10,15 @@ import { useEffect, useRef, useState } from "react"
 
 // ── Slide registry ─────────────────────────────────────────────────────────
 // Add your images here. `id` is what the controller sends.
+
+/**
+ * Represents a single slide entry in the slide registry.
+ *
+ * @property id - Unique identifier used by the controller to reference this slide.
+ * @property src - Path to the image file, relative to the /public directory.
+ * @property alt - Alt text for the image, used for accessibility.
+ * @property caption - Optional text overlay displayed at the bottom of the slide.
+ */
 export interface SlideEntry {
   id:      string
   src:     string   // path relative to /public
@@ -16,6 +26,10 @@ export interface SlideEntry {
   caption?: string  // optional text overlay
 }
 
+/**
+ * Array of registered slides. The controller sends an `id` to switch slides.
+ * The first entry serves as the default fallback.
+ */
 export const SLIDES: SlideEntry[] = [
   {
     id:      "poster",
@@ -28,6 +42,14 @@ export const SLIDES: SlideEntry[] = [
 ]
 
 // ── Types ──────────────────────────────────────────────────────────────────
+
+/**
+ * Props for the SaptasurSlide component.
+ *
+ * @property slideId - The ID of the slide to display (must match a slide in SLIDES).
+ * @property phase - The transition phase: "enter" (visible) or "exit" (hidden/fading out).
+ * @property connected - Whether the phone controller is connected (affects the status dot color).
+ */
 interface Props {
   slideId:   string                           // which slide to show
   phase:     "enter" | "exit"                 // transition state
@@ -35,6 +57,17 @@ interface Props {
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
+
+/**
+ * Fullscreen slide component that displays a single image from the SLIDES registry.
+ * It handles image loading state and transitions (opacity and scale) driven by the parent.
+ *
+ * @param props - The component props.
+ * @param props.slideId - The ID of the slide to display.
+ * @param props.phase - The transition phase ("enter" or "exit").
+ * @param props.connected - Whether the controller is connected.
+ * @returns A React element rendering the fullscreen slide with optional caption and connection indicator.
+ */
 export default function SaptasurSlide({ slideId, phase, connected }: Props) {
   const slide = SLIDES.find(s => s.id === slideId) ?? SLIDES[0]
   const [loaded, setLoaded] = useState(false)
@@ -130,3 +163,4 @@ export default function SaptasurSlide({ slideId, phase, connected }: Props) {
     </div>
   )
 }
+```
